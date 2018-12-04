@@ -1,0 +1,90 @@
+html {
+  background-color: white;
+  margin-bottom: 0px;
+  margin-left: 0px;
+  margin-right: 0px;
+  margin-top: 0px;
+  padding-bottom: 0px;
+  padding-left: 0px;
+  padding-right: 0px;
+  padding-top: 0px;
+}
+
+table {
+  border: 0px;
+}
+
+.page {
+  color: #454545;
+  font-family: Helvetica;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 20px;
+  width: 790px;
+}
+
+.app-head {
+  color: #252525;
+}
+
+div.app-ico-small {
+  float: left;
+  position: relative;
+  padding-right: 20px;
+}
+
+.app-screen {
+  background: url("iPhone-placa.png");
+  height: 512px;
+  position: relative;
+  width: 292px;
+}
+
+.download {
+  margin-top: 20px;
+}
+
+.soclink {
+  margin-top: 20px;
+}
+
+.contact-form {
+  /*font-size: 12px;*/
+  margin-top: 20px;
+}
+
+.mailme {
+  vertical-align: middle;
+}
+
+.rcolumn {
+  float: right;
+  width: 60%;
+}
+
+.lcolumn {
+  float: left;
+  width: 40%;
+}
+
+div.ico-small {
+  position: relative;
+}
+
+img.ico-small {
+  height: 60px;
+  width: 60px;
+  z-index: 0;
+}
+
+.footer {
+  padding-top: 40px;
+  clear: both;
+}
+
+.copyright-notice {
+  color: #888;
+  font-size: 10px;
+  padding-top: 10px;
+  text-align: center;
+}
