@@ -49,7 +49,7 @@
                   ]);          
           var rhGaugeOptions = {
             width: 180, height: 180,
-            greenFrom: 40, greenTo: 60,
+            greenFrom: 35, greenTo: 60,
             min: 0, max: 100,
             minorTicks: 10
           };        
@@ -61,7 +61,7 @@
         
         dataQuery = sensors.child("data").orderByKey().limitToLast(2160).once("value").then(function(snapshot) {
           dataArray = [
-            ['Time', 'Temperature']
+            ['Time', 'Temperature', 'Min']
           ];
 
           var dataPoints = snapshot.val();
@@ -69,14 +69,18 @@
             var dp = dataPoints[key]
             var date = new Date(dp['time'])
             var dateString = date.toLocaleString('en-GB', {weekday: 'short', hour: 'numeric', minute: 'numeric'})
-            dataArray.push([dateString, dp['temp']])
+            var minTemp = 10
+            if (date.getHours() >= 9 && date.getHours() + date.getMinutes() / 60 <= 17.5) {
+              minTemp = 18
+            }
+            dataArray.push([dateString, dp['temp'], minTemp])
           });
           
           var data = google.visualization.arrayToDataTable(dataArray);
 
           var options = {
             title: 'Temperature in the last 3 days',
-            curveType: 'function',
+            curveType: 'none',
             legend: { position: 'bottom' }
           };
 
@@ -91,10 +95,10 @@
   </head>
   <body>
     <div id="gauges" style="width: 100%; height: 180px;">
-      <div id="temp_gauge" style="width: 180px; height: 180px;float:left;"></div>
-      <div id="rh_gauge" style="width: 180px; height: 180px;float:left;"></div>
+      <div id="temp_gauge" style="width: 180px; height: 180px; float:left;"></div>
+      <div id="rh_gauge" style="width: 180px; height: 180px; float:left;"></div>
     </div>
     <div id="timestamp">Loading data...</div>
-    <div id="curve_chart" style="width: 100%; height: 500px"></div>
+    <div id="curve_chart" style="width: 100%; height: 500px; float:left;"></div>
   </body>
 </html>
