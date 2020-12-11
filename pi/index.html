@@ -4,7 +4,14 @@
     <meta charset="utf-8">
     <title>Office temperature</title>
     <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/5.7.0/firebase.js"></script>
+    <!-- <script src="https://www.gstatic.com/firebasejs/5.7.0/firebase.js"></script> -->
+
+    <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
+    <script src="https://www.gstatic.com/firebasejs/8.1.2/firebase-app.js"></script>
+  
+    <!-- Add Firebase products that you want to use -->
+    <script src="https://www.gstatic.com/firebasejs/8.1.2/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.1.2/firebase-database.js"></script>
   
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script type="text/javascript">
@@ -24,76 +31,84 @@
         };
       
         firebase.initializeApp(config);
-        var sensors = firebase.database().ref("sensors");
-        sensors.child("latest").once("value").then(function(snapshot) {
-          latest = snapshot.val()
-          var timestamp = new Date(latest['time'])
-          $('#timestamp').text('Values as of: ' + timestamp.toLocaleString('en-GB'));
-          
-          var tempGaugeData = google.visualization.arrayToDataTable([
-                    ['Label', 'Value'],
-                    ['Temp °C', latest['temp']]
-                  ]);          
-          var tempGaugeOptions = {
-            width: 180, height: 180,
-            greenFrom: 18, greenTo: 24,
-            min: 10, max: 30,
-            minorTicks: 5
-          };        
-          var tempGaugeChart = new google.visualization.Gauge(document.getElementById('temp_gauge'));
-          tempGaugeChart.draw(tempGaugeData, tempGaugeOptions);    
 
-          var rhGaugeData = google.visualization.arrayToDataTable([
-                    ['Label', 'Value'],
-                    ['RH %', latest['rh']]
-                  ]);          
-          var rhGaugeOptions = {
-            width: 180, height: 180,
-            greenFrom: 35, greenTo: 60,
-            min: 0, max: 100,
-            minorTicks: 10
-          };        
-          var rhGaugeChart = new google.visualization.Gauge(document.getElementById('rh_gauge'));
-          rhGaugeChart.draw(rhGaugeData, rhGaugeOptions);    
+        firebase.auth().signInWithEmailAndPassword('pi@deepscoring.com', 'Banbury44;Password')
+          .then((user) => {
 
+            let db = firebase.database().ref("sensors");
+            db.child("latest").once("value").then(function(snapshot) {
+              latest = snapshot.val()
+              var timestamp = new Date(latest['time'])
+              $('#timestamp').text('Values as of: ' + timestamp.toLocaleString('en-GB'));
+              
+              var tempGaugeData = google.visualization.arrayToDataTable([
+                        ['Label', 'Value'],
+                        ['Temp °C', latest['temp']]
+                      ]);          
+              var tempGaugeOptions = {
+                width: 180, height: 180,
+                greenFrom: 18, greenTo: 24,
+                min: 10, max: 30,
+                minorTicks: 5
+              };        
+              var tempGaugeChart = new google.visualization.Gauge(document.getElementById('temp_gauge'));
+              tempGaugeChart.draw(tempGaugeData, tempGaugeOptions);    
+
+              var rhGaugeData = google.visualization.arrayToDataTable([
+                        ['Label', 'Value'],
+                        ['RH %', latest['rh']]
+                      ]);          
+              var rhGaugeOptions = {
+                width: 180, height: 180,
+                greenFrom: 35, greenTo: 60,
+                min: 0, max: 100,
+                minorTicks: 10
+              };        
+              var rhGaugeChart = new google.visualization.Gauge(document.getElementById('rh_gauge'));
+              rhGaugeChart.draw(rhGaugeData, rhGaugeOptions);    
+
+            });
+            
+            var idealTemp = 21
+            var workingHoursTolerance = 3
+            var outOfHoursTolerance = 8
+            dataQuery = db.child("data").orderByKey().limitToLast(720 * 4).once("value").then(function(snapshot) {
+              dataArray = [
+                ['Time', 'Temperature', 'Min', 'Max']
+              ];
+
+              var dataPoints = snapshot.val();
+              Object.keys(dataPoints).forEach(function(key) {
+                var dp = dataPoints[key]
+                var date = new Date(dp['time'])
+                var dateString = date.toLocaleString('en-GB', {weekday: 'short', hour: 'numeric', minute: 'numeric'})
+                var minTemp = idealTemp - outOfHoursTolerance
+                var maxTemp = idealTemp + outOfHoursTolerance
+                if (date.getHours() >= 9 && date.getHours() + date.getMinutes() / 60 <= 17.5) {
+                  minTemp = idealTemp - workingHoursTolerance
+                  maxTemp = idealTemp + workingHoursTolerance
+                }
+                dataArray.push([dateString, dp['temp'], minTemp, maxTemp])
+              });
+              
+              var data = google.visualization.arrayToDataTable(dataArray);
+
+              var options = {
+                title: 'Temperature in the last 4 days',
+                curveType: 'none',
+                legend: { position: 'bottom' }
+              };
+
+              var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
+
+              chart.draw(data, options);
+
+            });
+            
+          })
+        .catch((error) => {
+          console.log(error);
         });
-        
-        var idealTemp = 21
-        var workingHoursTolerance = 3
-        var outOfHoursTolerance = 8
-        dataQuery = sensors.child("data").orderByKey().limitToLast(720 * 4).once("value").then(function(snapshot) {
-          dataArray = [
-            ['Time', 'Temperature', 'Min', 'Max']
-          ];
-
-          var dataPoints = snapshot.val();
-          Object.keys(dataPoints).forEach(function(key) {
-            var dp = dataPoints[key]
-            var date = new Date(dp['time'])
-            var dateString = date.toLocaleString('en-GB', {weekday: 'short', hour: 'numeric', minute: 'numeric'})
-            var minTemp = idealTemp - outOfHoursTolerance
-            var maxTemp = idealTemp + outOfHoursTolerance
-            if (date.getHours() >= 9 && date.getHours() + date.getMinutes() / 60 <= 17.5) {
-              minTemp = idealTemp - workingHoursTolerance
-              maxTemp = idealTemp + workingHoursTolerance
-            }
-            dataArray.push([dateString, dp['temp'], minTemp, maxTemp])
-          });
-          
-          var data = google.visualization.arrayToDataTable(dataArray);
-
-          var options = {
-            title: 'Temperature in the last 4 days',
-            curveType: 'none',
-            legend: { position: 'bottom' }
-          };
-
-          var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
-
-          chart.draw(data, options);
-
-        });
-        
       }
     </script>
   </head>
